@@ -22,8 +22,6 @@ class Users(Resource):
 
         args = parser.parse_args()  # parse arguments to dictionary
 
-        # create new dataframe containing new values
-
         # read our CSV
         data = pd.read_csv('users.csv')
 
@@ -52,6 +50,54 @@ class Users(Resource):
         parser.add_argument('location', required=True)
 
         args = parser.parse_args()  # parse arguments to dictionary
+
+        # read our CSV
+        data = pd.read_csv('users.csv')
+
+        if args['userId'] in list(data['userId']):
+            # evaluate strings of lists to lists
+            data['locations'] = data['locations'].apply(
+                lambda x: ast.literal_eval(x)
+            )
+
+            # select our user
+            user_data = data[data['userId'] == args['userId']]
+
+            # update users location
+            user_data['locations'] = user_data['locations'].values[0].append(args['location'])
+
+            # save back to CSV
+            data.to_csv('users.csv', index=False)
+            # return data and 200 OK
+            return {'data': data.to_dict()}, 200
+        else:
+            # userId doesn't exists
+            return {
+                'message': f" '{args['userId']}' user not found."
+            }, 404
+
+    
+    def delete(self):
+        parser = reqparse.RequestParser()  # initialize
+        parser.add_argument('userId', required=True)  # add userId arg
+        args = parser.parse_args()   # parse arguments to dictionary
+
+        # read our CSV
+        data = pd.read_csv('users.csv')
+
+        if args['userId'] in list(data['userId']):
+            # remove data entry matching userId
+            data = data[data['userId'] != args['userId']]
+
+            # save back to CSV
+            data.to_csv('users.csv', index=False)
+            # return data and 200 OK
+            return {'data': data.to_dict()}, 200
+        else:
+            # otherwise we return 404 because userid doesn't exists
+            return {
+                'message': f" '{args['userId']}' user not found. "
+            }, 404
 
 class Locations(Resource):
     # methods go here
